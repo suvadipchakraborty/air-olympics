@@ -44,9 +44,9 @@ const EVENT_META = {
 const COMPARE_METRICS = [
   { key: "current", label: "Yesterday (Sprint)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
   { key: "weekAvg", label: "7-day average (Marathon)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
-  { key: "monthDelta", label: "Monthly improvement (Relay)", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
-  { key: "yearDelta", label: "Change vs. last year", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
-  { key: "year2Delta", label: "Change vs. two years ago", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
+  { key: "monthDelta", label: "Monthly improvement (Relay)", better: "higher", isDelta: true },
+  { key: "yearDelta", label: "Change vs. last year", better: "higher", isDelta: true },
+  { key: "year2Delta", label: "Change vs. two years ago", better: "higher", isDelta: true },
   { key: "personalBest", label: "Personal best", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
   { key: "historicalPeak", label: "Historical peak (Weightlifting)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(0) }
 ];
@@ -441,6 +441,12 @@ function renderComparison() {
 
 function formatCompareValue(v, metric) {
   if (v === null || v === undefined || !Number.isFinite(v)) return "—";
+  if (metric.isDelta) {
+    if (Math.abs(v) < 0.5) return `flat <span class="unit">no meaningful change</span>`;
+    return v > 0
+      ? `▼ ${v.toFixed(1)} <span class="unit">cleaner</span>`
+      : `▲ ${Math.abs(v).toFixed(1)} <span class="unit">dirtier</span>`;
+  }
   const formatted = metric.format(v);
   return `${formatted} <span class="unit">${metric.unit}</span>`;
 }
