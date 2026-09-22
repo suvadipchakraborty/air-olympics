@@ -43,4 +43,4 @@ The sheet is append-only (one row per city per run date); the app automatically 
 
 - Replace `assets/preview.jpg` with a real share-card image (1200×630 recommended) — the placeholder here is theme-matched but generic.
 - Double-check the CSV URL in `js/data.js` still points at your published sheet (Google's "Publish to web" links can change if you republish under a new sheet/tab).
-- Update the `og:url`/canonical link once you have your final Cloudflare Pages domain, if you want exact-match previews.
+- Live at https://air-olympics.suvadipchakraborty.workers.dev/ — `og:url`, canonical link, and the OG/Twitter image tags in `index.html` are already pointed at this domain. If the domain ever changes, update those in one pass.
