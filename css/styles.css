@@ -496,6 +496,10 @@ main { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; paddin
   padding: 0;
 }
 
+.modal-overlay[hidden] {
+  display: none;
+}
+
 @media (min-width: 720px) {
   .modal-overlay { align-items: center; padding: 24px; }
 }
