@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Air Olympics — The Smog Games</title>
+<meta name="description" content="100 cities. One brutal atmosphere. Live PM2.5 rankings, reimagined as a dystopian sports league.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Air Olympics — The Smog Games">
+<meta property="og:description" content="100 cities compete for gold in the world's least breathable sport. Live PM2.5 rankings, reimagined as a dystopian sports league.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/assets/preview.jpg">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Air Olympics — The Smog Games">
+<meta name="twitter:description" content="100 cities compete for gold in the world's least breathable sport.">
+<meta name="twitter:image" content="/assets/preview.jpg">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏭</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Ambient particulate layer -->
+<div class="particulate-layer" id="particulateLayer" aria-hidden="true"></div>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">AIR<span class="brand-mark-alt">OLYMPICS</span></span>
+      <span class="brand-sub">THE SMOG GAMES · LIVE STANDINGS</span>
+    </div>
+    <div class="global-readout" id="globalReadout">
+      <span class="readout-label">Global Avg PM2.5</span>
+      <span class="readout-value" id="globalAvgValue">—</span>
+      <span class="readout-unit">µg/m³</span>
+    </div>
+    <nav class="header-actions">
+      <button class="icon-btn" id="aboutBtn" aria-haspopup="dialog">About</button>
+      <button class="icon-btn" id="shareBtn" aria-label="Share Air Olympics">Share</button>
+    </nav>
+  </div>
+</header>
+
+<main id="mainContent">
+
+  <!-- ===================== HERO / PODIUM ===================== -->
+  <section class="hero" aria-label="Overall standings podium">
+    <div class="hero-copy">
+      <h1>Nobody trains for this event.<br>Everybody competes.</h1>
+      <p class="hero-deck">Every city on Earth breathes whether it wants to or not. We just started keeping score. Rankings below are pulled from yesterday's PM2.5 readings — lower is better, and gold is a curse nobody wants two days running.</p>
+    </div>
+    <div class="podium-wrap" id="podiumWrap" aria-label="Top 3 cleanest cities, 100m Sprint">
+      <div class="podium-loading" id="podiumLoading">Calling athletes to the line…</div>
+    </div>
+  </section>
+
+  <!-- ===================== EVENTS NAV ===================== -->
+  <nav class="events-nav" id="eventsNav" aria-label="Event selector">
+    <button class="event-tab is-active" data-event="sprint">
+      <span class="event-tab-name">100m Sprint</span>
+      <span class="event-tab-desc">Current form</span>
+    </button>
+    <button class="event-tab" data-event="marathon">
+      <span class="event-tab-name">Marathon</span>
+      <span class="event-tab-desc">7-day average</span>
+    </button>
+    <button class="event-tab" data-event="relay">
+      <span class="event-tab-name">Relay</span>
+      <span class="event-tab-desc">Monthly improvement</span>
+    </button>
+    <button class="event-tab" data-event="weightlifting">
+      <span class="event-tab-name">Weightlifting</span>
+      <span class="event-tab-desc">Historical peak · anti-medal</span>
+    </button>
+  </nav>
+
+  <!-- ===================== LEADERBOARD ===================== -->
+  <section class="leaderboard-section" aria-label="Event leaderboard">
+    <div class="leaderboard-head">
+      <h2 id="eventTitle">The 100m Sprint</h2>
+      <p id="eventExplainer">Ranked on yesterday's PM2.5 reading alone. No averages to hide behind — this is who showed up clean yesterday.</p>
+    </div>
+
+    <div class="leaderboard-controls">
+      <input type="search" id="citySearch" class="search-input" placeholder="Find a city or country…" aria-label="Search cities">
+      <select id="continentFilter" class="filter-select" aria-label="Filter by continent">
+        <option value="all">All continents</option>
+      </select>
+    </div>
+
+    <div class="leaderboard-table-wrap">
+      <table class="leaderboard-table" id="leaderboardTable">
+        <thead>
+          <tr>
+            <th class="col-rank">Rank</th>
+            <th class="col-city">City</th>
+            <th class="col-value" id="colValueLabel">Yesterday</th>
+            <th class="col-bar">Field</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr><td colspan="4" class="loading-row">Loading results…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== TICKER ===================== -->
+<div class="ticker-bar" aria-label="Live commentary">
+  <div class="ticker-label">LIVE</div>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="tickerTrack">
+      <span class="ticker-item">Loading commentary feed…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>Built by Suva</p>
+    <p class="footer-note">Data: Open-Meteo Air Quality API, sampled daily. Satire, not science — nobody actually gets a medal for this.</p>
+    <a class="footer-link" href="mailto:suvadipchakraborty@gmail.com?subject=Feedback%3A%20Air%20Olympics" id="feedbackLink">Send feedback</a>
+  </div>
+</footer>
+
+<!-- ===================== ATHLETE PROFILE MODAL ===================== -->
+<div class="modal-overlay" id="athleteModal" role="dialog" aria-modal="true" aria-labelledby="athleteModalTitle" hidden>
+  <div class="modal-panel athlete-panel">
+    <button class="modal-close" id="athleteModalClose" aria-label="Close athlete profile">✕</button>
+    <div class="athlete-head">
+      <div>
+        <div class="athlete-country" id="athleteCountry">Country</div>
+        <h3 id="athleteModalTitle">City</h3>
+      </div>
+      <div class="athlete-current">
+        <span class="athlete-current-value" id="athleteCurrentValue">—</span>
+        <span class="athlete-current-label">yesterday, µg/m³</span>
+      </div>
+    </div>
+
+    <div class="athlete-chart-wrap">
+      <div class="athlete-chart-title">Last 7 days</div>
+      <svg id="athleteSparkline" class="athlete-sparkline" viewBox="0 0 600 180" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="athlete-stats-grid">
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">Personal best</span>
+        <span class="athlete-stat-value" id="athletePB">—</span>
+      </div>
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">Historical peak</span>
+        <span class="athlete-stat-value" id="athletePeak">—</span>
+      </div>
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">7-day average</span>
+        <span class="athlete-stat-value" id="athleteWeekAvg">—</span>
+      </div>
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">vs. last month</span>
+        <span class="athlete-stat-value" id="athleteMonthDelta">—</span>
+      </div>
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">vs. last year</span>
+        <span class="athlete-stat-value" id="athleteYearDelta">—</span>
+      </div>
+      <div class="athlete-stat">
+        <span class="athlete-stat-label">vs. two years ago</span>
+        <span class="athlete-stat-value" id="athleteYear2Delta">—</span>
+      </div>
+    </div>
+
+    <p class="athlete-commentary" id="athleteCommentary"></p>
+  </div>
+</div>
+
+<!-- ===================== ABOUT MODAL ===================== -->
+<div class="modal-overlay" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle" hidden>
+  <div class="modal-panel about-panel">
+    <button class="modal-close" id="aboutModalClose" aria-label="Close about panel">✕</button>
+    <h3 id="aboutModalTitle">What is this?</h3>
+    <p>Air Olympics takes daily PM2.5 (fine particulate matter) readings for 100 cities worldwide and scores them like sporting events. Lower PM2.5 is better — it means fewer microscopic particles small enough to lodge in your lungs and bloodstream.</p>
+    <p><strong>PM2.5</strong> refers to airborne particles 2.5 micrometers or smaller — about 3% the width of a human hair. It's one of the most-watched indicators inside the broader Air Quality Index (AQI) because of how directly it's linked to respiratory and cardiovascular health.</p>
+    <h4>The events</h4>
+    <ul>
+      <li><strong>100m Sprint</strong> — yesterday's raw reading. Pure current form.</li>
+      <li><strong>Marathon</strong> — 7-day rolling average. Consistency over a sprint result.</li>
+      <li><strong>Relay</strong> — change versus a month ago. Biggest improvement wins.</li>
+      <li><strong>Weightlifting</strong> — the worst reading ever recorded for that city in this dataset. An anti-medal nobody wants.</li>
+    </ul>
+    <p>Data comes from the <strong>Open-Meteo Air Quality API</strong>, sampled daily and published as a rolling historical window. This project is satire wrapped around real numbers — the jokes are ours, the pollution is unfortunately everyone's.</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
