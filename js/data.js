@@ -161,8 +161,8 @@ const AirOlympicsData = {
 };
 
 /* ============================================================
-   Commentary engine — satirical sports-desk lines generated
-   from whatever the data actually says.
+   Commentary engine — used only to describe an athlete's current
+   form on their profile card (the scrolling ticker was removed).
    ============================================================ */
 
 const CommentaryEngine = {
@@ -174,56 +174,5 @@ const CommentaryEngine = {
     if (v <= 90) return "rough";
     if (v <= 150) return "brutal";
     return "apocalyptic";
-  },
-
-  generate(cities) {
-    const lines = [];
-    const withCurrent = cities.filter((c) => c.current !== null);
-
-    withCurrent.forEach((c) => {
-      const band = this.bandLabel(c.current);
-      if (band === "elite") {
-        lines.push(`${c.city} posts a pristine ${c.current.toFixed(0)} µg/m³ — an absolute masterclass in atmospheric defense.`);
-      } else if (band === "apocalyptic") {
-        lines.push(`${c.city} clocks in at ${c.current.toFixed(0)} µg/m³. Commentators are speechless. So are the residents, medically.`);
-      } else if (band === "brutal") {
-        lines.push(`Rough session for ${c.city} — ${c.current.toFixed(0)} µg/m³ on the board, well outside medal contention.`);
-      }
-
-      if (c.monthDelta !== null && c.monthDelta > 15) {
-        lines.push(`${c.city} storms up the Relay standings, cutting ${c.monthDelta.toFixed(0)} points off last month's reading.`);
-      } else if (c.monthDelta !== null && c.monthDelta < -15) {
-        lines.push(`${c.city} fades hard in the Relay — up ${Math.abs(c.monthDelta).toFixed(0)} points versus last month. Analysts are concerned.`);
-      }
-
-      if (c.current !== null && c.personalBest !== null && c.current <= c.personalBest + 0.5) {
-        lines.push(`Season best for ${c.city}! Yesterday's reading matches their cleanest air on record.`);
-      }
-      if (c.current !== null && c.historicalPeak !== null && c.current >= c.historicalPeak - 0.5) {
-        lines.push(`${c.city} flirts with their all-time worst reading. The Weightlifting judges are taking notes.`);
-      }
-    });
-
-    // Field-wide lines
-    const sprint = AirOlympicsData.rankings("sprint");
-    if (sprint.length >= 2) {
-      const gap = sprint[1].value - sprint[0].value;
-      lines.push(`${sprint[0].city.city} leads the 100m Sprint by ${gap.toFixed(1)} points over ${sprint[1].city.city}. Comfortable, for now.`);
-    }
-    const marathon = AirOlympicsData.rankings("marathon");
-    if (marathon.length) {
-      lines.push(`${marathon[0].city.city} holds the Marathon title with a 7-day average of ${marathon[0].value.toFixed(1)} µg/m³.`);
-    }
-    const weightlifting = AirOlympicsData.rankings("weightlifting");
-    if (weightlifting.length) {
-      lines.push(`Nobody wants it, but ${weightlifting[0].city.city} still holds the Weightlifting anti-record at ${weightlifting[0].value.toFixed(0)} µg/m³.`);
-    }
-
-    // Shuffle for variety, cap the ticker length
-    for (let i = lines.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [lines[i], lines[j]] = [lines[j], lines[i]];
-    }
-    return lines.slice(0, 40);
   }
 };

@@ -42,99 +42,162 @@
       <span class="brand-sub">THE SMOG GAMES · LIVE STANDINGS</span>
     </div>
     <div class="global-readout" id="globalReadout">
-      <span class="readout-label">Global Avg PM2.5</span>
+      <span class="readout-label">Global Avg PM2.5<span class="readout-refresh">Updates daily</span></span>
       <span class="readout-value" id="globalAvgValue">—</span>
       <span class="readout-unit">µg/m³</span>
     </div>
-    <nav class="header-actions">
-      <button class="icon-btn" id="aboutBtn" aria-haspopup="dialog">About</button>
-      <button class="icon-btn" id="shareBtn" aria-label="Share Air Olympics">Share</button>
-    </nav>
+    <button class="icon-btn icon-only" id="shareBtn" aria-label="Share Air Olympics" title="Share">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="8.6" y1="10.6" x2="15.4" y2="6.4" stroke="currentColor" stroke-width="2"/>
+        <line x1="8.6" y1="13.4" x2="15.4" y2="17.6" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </button>
   </div>
+  <nav class="site-tabs" role="tablist" aria-label="Site sections">
+    <button class="tab-btn is-active" data-tab="home" role="tab" aria-selected="true">Home</button>
+    <button class="tab-btn" data-tab="compare" role="tab" aria-selected="false">Compare</button>
+    <button class="tab-btn" data-tab="about" role="tab" aria-selected="false">About</button>
+  </nav>
 </header>
 
 <main id="mainContent">
 
-  <!-- ===================== HERO / PODIUM ===================== -->
-  <section class="hero" aria-label="Overall standings podium">
-    <div class="hero-copy">
-      <h1>Nobody trains for this event.<br>Everybody competes.</h1>
-      <p class="hero-deck hero-purpose">Air Olympics ranks 100 world cities on their daily PM2.5 air pollution as if it were a sport — cleanest air takes gold, dirtiest gets nothing. Full rules and data source are in the About tab.</p>
-      <p class="hero-deck">Rankings below are pulled from yesterday's readings — lower is better, and gold is a curse nobody wants two days running.</p>
+  <!-- ===================== HOME TAB ===================== -->
+  <section id="panel-home" class="tab-panel">
+
+    <!-- HERO / PODIUM -->
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Nobody trains for this event.<br>Everybody competes.</h1>
+        <p class="hero-deck hero-purpose">Air Olympics ranks 100 world cities on their daily PM2.5 air pollution as if it were a sport — cleanest air takes gold, dirtiest gets nothing. The board refreshes once a day. Full rules and data source are in the About tab.</p>
+        <p class="hero-deck">Rankings below are pulled from yesterday's readings — lower is better, and gold is a curse nobody wants two days running.</p>
+      </div>
+      <div class="podium-wrap-outer">
+        <div class="podium-tag" id="podiumEventLabel">100m Sprint · Top 3</div>
+        <div class="podium-wrap" id="podiumWrap" aria-label="Top 3 cities for the selected event">
+          <div class="podium-loading" id="podiumLoading">Calling athletes to the line…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENTS NAV -->
+    <nav class="events-nav" id="eventsNav" aria-label="Event selector">
+      <button class="event-tab is-active" data-event="sprint">
+        <span class="event-tab-name">100m Sprint</span>
+        <span class="event-tab-desc">Current form</span>
+      </button>
+      <button class="event-tab" data-event="marathon">
+        <span class="event-tab-name">Marathon</span>
+        <span class="event-tab-desc">7-day average</span>
+      </button>
+      <button class="event-tab" data-event="relay">
+        <span class="event-tab-name">Relay</span>
+        <span class="event-tab-desc">Monthly improvement</span>
+      </button>
+      <button class="event-tab" data-event="weightlifting">
+        <span class="event-tab-name">Weightlifting</span>
+        <span class="event-tab-desc">Historical peak · anti-medal</span>
+      </button>
+    </nav>
+
+    <!-- LEADERBOARD -->
+    <section class="leaderboard-section" aria-label="Event leaderboard">
+      <div class="leaderboard-head">
+        <h2 id="eventTitle">The 100m Sprint</h2>
+        <p id="eventExplainer">Ranked on yesterday's PM2.5 reading alone. No averages to hide behind — this is who showed up clean yesterday.</p>
+      </div>
+
+      <div class="leaderboard-controls">
+        <input type="search" id="citySearch" class="search-input" placeholder="Find a city or country…" aria-label="Search cities">
+        <select id="continentFilter" class="filter-select" aria-label="Filter by continent">
+          <option value="all">All continents</option>
+        </select>
+      </div>
+
+      <div class="leaderboard-table-wrap">
+        <table class="leaderboard-table" id="leaderboardTable">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th class="col-city">City</th>
+              <th class="col-value" id="colValueLabel">Yesterday</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <tr><td colspan="3" class="loading-row">Loading results…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===================== COMPARE TAB ===================== -->
+  <section id="panel-compare" class="tab-panel" hidden>
+    <div class="compare-head">
+      <h2>Head to Head</h2>
+      <p>Pick any two cities to line up every metric side by side — sprint form, marathon average, monthly improvement, and the worst-ever reading on record — and see who actually wins.</p>
     </div>
-    <div class="podium-wrap" id="podiumWrap" aria-label="Top 3 cleanest cities, 100m Sprint">
-      <div class="podium-loading" id="podiumLoading">Calling athletes to the line…</div>
+
+    <div class="compare-pickers">
+      <div class="compare-picker">
+        <label for="compareCityA">City A</label>
+        <select id="compareCityA">
+          <option value="">Select a city…</option>
+        </select>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-picker">
+        <label for="compareCityB">City B</label>
+        <select id="compareCityB">
+          <option value="">Select a city…</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="compareResult" class="compare-result">
+      <p class="compare-empty" id="compareEmpty">Choose two different cities above to start the head-to-head.</p>
+      <table class="compare-table" id="compareTable" hidden>
+        <thead>
+          <tr>
+            <th class="cmp-metric-col">Metric</th>
+            <th id="cmpNameA"></th>
+            <th id="cmpNameB"></th>
+          </tr>
+        </thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+      <div class="compare-summary" id="compareSummary" hidden></div>
     </div>
   </section>
 
-  <!-- ===================== EVENTS NAV ===================== -->
-  <nav class="events-nav" id="eventsNav" aria-label="Event selector">
-    <button class="event-tab is-active" data-event="sprint">
-      <span class="event-tab-name">100m Sprint</span>
-      <span class="event-tab-desc">Current form</span>
-    </button>
-    <button class="event-tab" data-event="marathon">
-      <span class="event-tab-name">Marathon</span>
-      <span class="event-tab-desc">7-day average</span>
-    </button>
-    <button class="event-tab" data-event="relay">
-      <span class="event-tab-name">Relay</span>
-      <span class="event-tab-desc">Monthly improvement</span>
-    </button>
-    <button class="event-tab" data-event="weightlifting">
-      <span class="event-tab-name">Weightlifting</span>
-      <span class="event-tab-desc">Historical peak · anti-medal</span>
-    </button>
-  </nav>
-
-  <!-- ===================== LEADERBOARD ===================== -->
-  <section class="leaderboard-section" aria-label="Event leaderboard">
-    <div class="leaderboard-head">
-      <h2 id="eventTitle">The 100m Sprint</h2>
-      <p id="eventExplainer">Ranked on yesterday's PM2.5 reading alone. No averages to hide behind — this is who showed up clean yesterday.</p>
-    </div>
-
-    <div class="leaderboard-controls">
-      <input type="search" id="citySearch" class="search-input" placeholder="Find a city or country…" aria-label="Search cities">
-      <select id="continentFilter" class="filter-select" aria-label="Filter by continent">
-        <option value="all">All continents</option>
-      </select>
-    </div>
-
-    <div class="leaderboard-table-wrap">
-      <table class="leaderboard-table" id="leaderboardTable">
-        <thead>
-          <tr>
-            <th class="col-rank">Rank</th>
-            <th class="col-city">City</th>
-            <th class="col-value" id="colValueLabel">Yesterday</th>
-            <th class="col-bar">Field</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboardBody">
-          <tr><td colspan="4" class="loading-row">Loading results…</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <!-- ===================== ABOUT TAB ===================== -->
+  <section id="panel-about" class="tab-panel about-page" hidden>
+    <h2>What is this?</h2>
+    <p>Air Olympics takes daily PM2.5 (fine particulate matter) readings for 100 cities worldwide and scores them like sporting events. Lower PM2.5 is better — it means fewer microscopic particles small enough to lodge in your lungs and bloodstream.</p>
+    <p><strong>PM2.5</strong> refers to airborne particles 2.5 micrometers or smaller — about 3% the width of a human hair. It's one of the most-watched indicators inside the broader Air Quality Index (AQI) because of how directly it's linked to respiratory and cardiovascular health.</p>
+    <h3>The events</h3>
+    <ul>
+      <li><strong>100m Sprint</strong> — yesterday's raw reading. Pure current form.</li>
+      <li><strong>Marathon</strong> — 7-day rolling average. Consistency over a sprint result.</li>
+      <li><strong>Relay</strong> — change versus a month ago. Biggest improvement wins.</li>
+      <li><strong>Weightlifting</strong> — the worst reading ever recorded for that city in this dataset. An anti-medal nobody wants.</li>
+      <li><strong>Compare</strong> — pick any two cities and line up every metric to settle an argument.</li>
+    </ul>
+    <h3>How fresh is the data?</h3>
+    <p>The board refreshes once a day. Each run pulls a new "Yesterday" reading per city and keeps the historical columns (day, month, and year lookbacks) alongside it, so trends and personal bests stay accurate as the days roll forward.</p>
+    <p>Data comes from the <strong>Open-Meteo Air Quality API</strong>, sampled daily and published as a rolling historical window. This project is satire wrapped around real numbers — the jokes are ours, the pollution is unfortunately everyone's.</p>
   </section>
 
 </main>
-
-<!-- ===================== TICKER ===================== -->
-<div class="ticker-bar" aria-label="Live commentary">
-  <div class="ticker-label">LIVE</div>
-  <div class="ticker-track-wrap">
-    <div class="ticker-track" id="tickerTrack">
-      <span class="ticker-item">Loading commentary feed…</span>
-    </div>
-  </div>
-</div>
 
 <!-- ===================== FOOTER ===================== -->
 <footer class="site-footer">
   <div class="footer-inner">
     <p>Built by Suva</p>
-    <p class="footer-note">Data: Open-Meteo Air Quality API, sampled daily. Satire, not science — nobody actually gets a medal for this.</p>
+    <p class="footer-note">Data: Open-Meteo Air Quality API, refreshed daily. Satire, not science — nobody actually gets a medal for this.</p>
     <a class="footer-link" href="mailto:suvadipchakraborty@gmail.com?subject=Feedback%3A%20Air%20Olympics" id="feedbackLink">Send feedback</a>
   </div>
 </footer>
@@ -187,24 +250,6 @@
     </div>
 
     <p class="athlete-commentary" id="athleteCommentary"></p>
-  </div>
-</div>
-
-<!-- ===================== ABOUT MODAL ===================== -->
-<div class="modal-overlay" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle" hidden>
-  <div class="modal-panel about-panel">
-    <button class="modal-close" id="aboutModalClose" aria-label="Close about panel">✕</button>
-    <h3 id="aboutModalTitle">What is this?</h3>
-    <p>Air Olympics takes daily PM2.5 (fine particulate matter) readings for 100 cities worldwide and scores them like sporting events. Lower PM2.5 is better — it means fewer microscopic particles small enough to lodge in your lungs and bloodstream.</p>
-    <p><strong>PM2.5</strong> refers to airborne particles 2.5 micrometers or smaller — about 3% the width of a human hair. It's one of the most-watched indicators inside the broader Air Quality Index (AQI) because of how directly it's linked to respiratory and cardiovascular health.</p>
-    <h4>The events</h4>
-    <ul>
-      <li><strong>100m Sprint</strong> — yesterday's raw reading. Pure current form.</li>
-      <li><strong>Marathon</strong> — 7-day rolling average. Consistency over a sprint result.</li>
-      <li><strong>Relay</strong> — change versus a month ago. Biggest improvement wins.</li>
-      <li><strong>Weightlifting</strong> — the worst reading ever recorded for that city in this dataset. An anti-medal nobody wants.</li>
-    </ul>
-    <p>Data comes from the <strong>Open-Meteo Air Quality API</strong>, sampled daily and published as a rolling historical window. This project is satire wrapped around real numbers — the jokes are ours, the pollution is unfortunately everyone's.</p>
   </div>
 </div>
 

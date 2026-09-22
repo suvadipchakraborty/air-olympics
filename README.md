@@ -1,18 +1,28 @@
 # Air Olympics — The Smog Games
 
-A client-side, no-build web app that turns daily PM2.5 readings for 100 global cities into a dystopian sports league: sprints, marathons, relays, and an anti-medal in weightlifting.
+A client-side, no-build web app that turns daily PM2.5 readings for 100 global cities into a dystopian sports league: sprints, marathons, relays, an anti-medal in weightlifting, and a head-to-head Compare tool.
 
 ## Files
 
 ```
-index.html          Page shell, markup, meta tags
+index.html          Page shell, markup, meta tags, three tabs (Home / Compare / About)
 css/styles.css       "Athletic Dystopia" theme
 js/data.js           CSV fetch + parsing + event scoring logic
-js/app.js            Rendering, interactivity, D3 sparklines, ticker
+js/app.js            Rendering, interactivity, D3 sparklines, tab + compare logic
 assets/preview.jpg   Placeholder social-share image (swap for your own)
 ```
 
 No build step, no `node_modules`, no framework. Just static files.
+
+## Structure
+
+The page is a single HTML document split into three tab panels, switched client-side (no reloads, no routing needed on your host):
+
+- **Home** — hero, event-aware podium (top 3 update to match whichever event is selected), event switcher, and the leaderboard.
+- **Compare** — pick any two cities and see every metric (sprint, marathon, relay, both year-over-year deltas, personal best, historical peak) lined up side by side, with a computed head-to-head winner.
+- **About** — the explainer content (what PM2.5 is, how each event is scored, data source, refresh cadence). Plain in-page content now, not a popup.
+
+The athlete profile (opened by tapping any city) is still a modal, since it's a quick detail lookup rather than a page.
 
 ## Data source
 

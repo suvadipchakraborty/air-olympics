@@ -6,6 +6,7 @@
 const EVENT_META = {
   sprint: {
     title: "The 100m Sprint",
+    short: "100m Sprint",
     explainer: "Ranked on yesterday's PM2.5 reading alone. No averages to hide behind — this is who showed up clean yesterday.",
     colLabel: "Yesterday",
     unit: "µg/m³",
@@ -13,6 +14,7 @@ const EVENT_META = {
   },
   marathon: {
     title: "The Marathon",
+    short: "Marathon",
     explainer: "Ranked on the 7-day rolling average. One bad morning won't cost you this one — but a bad week will.",
     colLabel: "7-day avg",
     unit: "µg/m³",
@@ -20,6 +22,7 @@ const EVENT_META = {
   },
   relay: {
     title: "The Relay",
+    short: "Relay",
     explainer: "Ranked on improvement since last month (Month -1 minus yesterday). The biggest drop in pollution takes gold.",
     colLabel: "Improvement",
     unit: "µg/m³ better",
@@ -27,6 +30,7 @@ const EVENT_META = {
   },
   weightlifting: {
     title: "Weightlifting",
+    short: "Weightlifting",
     explainer: "The anti-medal. Ranked on each city's worst PM2.5 reading anywhere in its history. Nobody trains for this podium.",
     colLabel: "Historic peak",
     unit: "µg/m³",
@@ -34,7 +38,21 @@ const EVENT_META = {
   }
 };
 
+// Metrics shown in the Compare tab. "better" tells the comparator which
+// direction wins: lower value wins, or higher value wins (deltas, where
+// a bigger positive number means more improvement).
+const COMPARE_METRICS = [
+  { key: "current", label: "Yesterday (Sprint)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
+  { key: "weekAvg", label: "7-day average (Marathon)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
+  { key: "monthDelta", label: "Monthly improvement (Relay)", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
+  { key: "yearDelta", label: "Change vs. last year", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
+  { key: "year2Delta", label: "Change vs. two years ago", unit: "µg/m³", better: "higher", format: (v) => v.toFixed(1) },
+  { key: "personalBest", label: "Personal best", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(1) },
+  { key: "historicalPeak", label: "Historical peak (Weightlifting)", unit: "µg/m³", better: "lower", format: (v) => v.toFixed(0) }
+];
+
 const state = {
+  tab: "home",
   event: "sprint",
   search: "",
   continent: "all"
@@ -57,17 +75,70 @@ async function init() {
   }
 
   populateContinentFilter();
+  populateCompareSelectors();
   renderGlobalReadout();
-  renderPodium();
+  renderPodium(state.event);
   renderLeaderboard();
-  startTicker();
 }
 
 function showLoadError() {
   const body = document.getElementById("leaderboardBody");
-  body.innerHTML = `<tr><td colspan="4" class="loading-row">Couldn't reach the results feed. The scoreboard operator has been notified. Try refreshing in a moment.</td></tr>`;
+  body.innerHTML = `<tr><td colspan="3" class="loading-row">Couldn't reach the results feed. The scoreboard operator has been notified. Try refreshing in a moment.</td></tr>`;
   document.getElementById("podiumLoading").textContent = "Results feed unavailable.";
-  document.getElementById("tickerTrack").innerHTML = `<span class="ticker-item">Commentary feed is offline — waiting on the data connection.</span>`;
+}
+
+/* ---------------------- Tabs ---------------------- */
+
+function wireStaticUI() {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setTab(btn.dataset.tab));
+  });
+
+  document.getElementById("eventsNav").addEventListener("click", (e) => {
+    const btn = e.target.closest(".event-tab");
+    if (!btn) return;
+    document.querySelectorAll(".event-tab").forEach((b) => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    state.event = btn.dataset.event;
+    renderLeaderboard();
+    renderPodium(state.event);
+  });
+
+  document.getElementById("citySearch").addEventListener("input", (e) => {
+    state.search = e.target.value.trim().toLowerCase();
+    renderLeaderboard();
+  });
+
+  document.getElementById("continentFilter").addEventListener("change", (e) => {
+    state.continent = e.target.value;
+    renderLeaderboard();
+  });
+
+  document.getElementById("athleteModalClose").addEventListener("click", () => toggleAthleteModal(false));
+  document.getElementById("athleteModal").addEventListener("click", (e) => {
+    if (e.target.id === "athleteModal") toggleAthleteModal(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") toggleAthleteModal(false);
+  });
+
+  document.getElementById("shareBtn").addEventListener("click", handleShare);
+
+  document.getElementById("compareCityA").addEventListener("change", renderComparison);
+  document.getElementById("compareCityB").addEventListener("change", renderComparison);
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll(".tab-btn").forEach((b) => {
+    const active = b.dataset.tab === tab;
+    b.classList.toggle("is-active", active);
+    b.setAttribute("aria-selected", String(active));
+  });
+  document.getElementById("panel-home").hidden = tab !== "home";
+  document.getElementById("panel-compare").hidden = tab !== "compare";
+  document.getElementById("panel-about").hidden = tab !== "about";
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 
 /* ---------------------- Global readout ---------------------- */
@@ -83,9 +154,13 @@ function renderGlobalReadout() {
 
 /* ---------------------- Podium ---------------------- */
 
-function renderPodium() {
-  const top3 = AirOlympicsData.rankings("sprint").slice(0, 3);
+function renderPodium(eventKey) {
+  const meta = EVENT_META[eventKey];
+  const top3 = AirOlympicsData.rankings(eventKey).slice(0, 3);
   const wrap = document.getElementById("podiumWrap");
+
+  document.getElementById("podiumEventLabel").textContent = `${meta.short} · Top 3`;
+  wrap.setAttribute("aria-label", `Top 3 cities, ${meta.title}`);
 
   if (!top3.length) {
     wrap.innerHTML = `<div class="podium-loading">No qualifying results yet.</div>`;
@@ -94,7 +169,7 @@ function renderPodium() {
 
   // Order for visual podium: 2nd, 1st, 3rd
   const order = [top3[1], top3[0], top3[2]].filter(Boolean);
-  const heights = { 0: 132, 1: 176, 2: 100 }; // matches gold/silver/bronze visual order below
+  const heights = { 0: 132, 1: 176, 2: 100 };
   const placeLabel = (rank) => (rank === 0 ? "GOLD" : rank === 1 ? "SILVER" : "BRONZE");
 
   wrap.innerHTML = "";
@@ -103,12 +178,12 @@ function renderPodium() {
     const step = document.createElement("button");
     step.className = `podium-step podium-step--${rank}`;
     step.style.setProperty("--step-h", `${heights[rank]}px`);
-    step.setAttribute("aria-label", `${entry.city.city}, ${placeLabel(rank)}, ${entry.value.toFixed(1)} µg/m³`);
+    step.setAttribute("aria-label", `${entry.city.city}, ${placeLabel(rank)}, ${meta.format(entry.value)} ${meta.unit}`);
     step.innerHTML = `
       <div class="podium-medal">${placeLabel(rank)}</div>
       <div class="podium-city">${escapeHtml(entry.city.city)}</div>
       <div class="podium-country">${escapeHtml(entry.city.country)}</div>
-      <div class="podium-value">${entry.value.toFixed(1)} <span>µg/m³</span></div>
+      <div class="podium-value">${meta.format(entry.value)} <span>${meta.unit}</span></div>
       <div class="podium-riser"></div>
     `;
     step.addEventListener("click", () => openAthleteModal(entry.city.id));
@@ -116,46 +191,7 @@ function renderPodium() {
   });
 }
 
-/* ---------------------- Events nav ---------------------- */
-
-function wireStaticUI() {
-  document.getElementById("eventsNav").addEventListener("click", (e) => {
-    const btn = e.target.closest(".event-tab");
-    if (!btn) return;
-    document.querySelectorAll(".event-tab").forEach((b) => b.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    state.event = btn.dataset.event;
-    renderLeaderboard();
-  });
-
-  document.getElementById("citySearch").addEventListener("input", (e) => {
-    state.search = e.target.value.trim().toLowerCase();
-    renderLeaderboard();
-  });
-
-  document.getElementById("continentFilter").addEventListener("change", (e) => {
-    state.continent = e.target.value;
-    renderLeaderboard();
-  });
-
-  document.getElementById("aboutBtn").addEventListener("click", () => toggleModal("aboutModal", true));
-  document.getElementById("aboutModalClose").addEventListener("click", () => toggleModal("aboutModal", false));
-  document.getElementById("athleteModalClose").addEventListener("click", () => toggleModal("athleteModal", false));
-
-  [document.getElementById("aboutModal"), document.getElementById("athleteModal")].forEach((overlay) => {
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) toggleModal(overlay.id, false);
-    });
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      toggleModal("aboutModal", false);
-      toggleModal("athleteModal", false);
-    }
-  });
-
-  document.getElementById("shareBtn").addEventListener("click", handleShare);
-}
+/* ---------------------- Continent filter ---------------------- */
 
 function populateContinentFilter() {
   const select = document.getElementById("continentFilter");
@@ -192,11 +228,9 @@ function renderLeaderboard() {
   body.innerHTML = "";
 
   if (!rows.length) {
-    body.innerHTML = `<tr><td colspan="4" class="loading-row">No cities match that search.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="3" class="loading-row">No cities match that search.</td></tr>`;
     return;
   }
-
-  const maxVal = Math.max(...rows.map((r) => Math.abs(r.value)), 1);
 
   rows.forEach((r, i) => {
     const tr = document.createElement("tr");
@@ -205,16 +239,13 @@ function renderLeaderboard() {
     else if (i === 1) tr.classList.add("rank-silver");
     else if (i === 2) tr.classList.add("rank-bronze");
 
-    const barPct = Math.max(4, (Math.abs(r.value) / maxVal) * 100);
-
     tr.innerHTML = `
       <td class="col-rank">${i + 1}</td>
       <td class="col-city">
         <span class="city-name">${escapeHtml(r.city.city)}</span>
         <span class="city-country">${escapeHtml(r.city.country)}</span>
       </td>
-      <td class="col-value">${meta.format(r.value)} <span class="unit">${meta.unit}</span></td>
-      <td class="col-bar"><div class="bar-track"><div class="bar-fill" style="width:${barPct}%"></div></div></td>
+      <td class="col-value">${meta.format(r.value)}<span class="unit">${meta.unit}</span></td>
     `;
     tr.addEventListener("click", () => openAthleteModal(r.city.id));
     body.appendChild(tr);
@@ -239,7 +270,7 @@ function openAthleteModal(cityId) {
   document.getElementById("athleteCommentary").textContent = athleteBlurb(c);
 
   drawSparkline(c.sparkline);
-  toggleModal("athleteModal", true);
+  toggleAthleteModal(true);
 }
 
 function formatDelta(v) {
@@ -307,7 +338,6 @@ function drawSparkline(values) {
     .attr("cy", (p) => y(p.v))
     .attr("r", 3.5);
 
-  // Highlight the most recent point
   const last = points[points.length - 1];
   svg.append("circle")
     .attr("class", "sparkline-dot sparkline-dot--current")
@@ -316,33 +346,103 @@ function drawSparkline(values) {
     .attr("r", 6);
 }
 
-/* ---------------------- Modals ---------------------- */
-
-function toggleModal(id, show) {
-  const el = document.getElementById(id);
+function toggleAthleteModal(show) {
+  const el = document.getElementById("athleteModal");
   el.hidden = !show;
-  document.body.classList.toggle("modal-open", !document.getElementById("aboutModal").hidden || !document.getElementById("athleteModal").hidden);
+  document.body.classList.toggle("modal-open", show);
 }
 
-/* ---------------------- Ticker ---------------------- */
+/* ---------------------- Compare tab ---------------------- */
 
-function startTicker() {
-  renderTicker();
-  // Refresh commentary variety every couple of minutes without refetching data
-  setInterval(renderTicker, 120000);
-}
+function populateCompareSelectors() {
+  const sorted = AirOlympicsData.cities.slice().sort((a, b) => a.city.localeCompare(b.city));
+  const selA = document.getElementById("compareCityA");
+  const selB = document.getElementById("compareCityB");
 
-function renderTicker() {
-  const lines = CommentaryEngine.generate(AirOlympicsData.cities);
-  const track = document.getElementById("tickerTrack");
-  track.innerHTML = "";
-  // Duplicate the line set so the CSS marquee loops seamlessly
-  [...lines, ...lines].forEach((line) => {
-    const span = document.createElement("span");
-    span.className = "ticker-item";
-    span.textContent = line;
-    track.appendChild(span);
+  sorted.forEach((c) => {
+    const label = `${c.city}, ${c.country}`;
+    const optA = document.createElement("option");
+    optA.value = c.id;
+    optA.textContent = label;
+    selA.appendChild(optA);
+
+    const optB = document.createElement("option");
+    optB.value = c.id;
+    optB.textContent = label;
+    selB.appendChild(optB);
   });
+}
+
+function renderComparison() {
+  const idA = document.getElementById("compareCityA").value;
+  const idB = document.getElementById("compareCityB").value;
+  const table = document.getElementById("compareTable");
+  const empty = document.getElementById("compareEmpty");
+  const summary = document.getElementById("compareSummary");
+
+  if (!idA || !idB || idA === idB) {
+    table.hidden = true;
+    summary.hidden = true;
+    empty.hidden = false;
+    empty.textContent = idA && idA === idB
+      ? "Pick two different cities to compare."
+      : "Choose two different cities above to start the head-to-head.";
+    return;
+  }
+
+  const cityA = AirOlympicsData.getCity(idA);
+  const cityB = AirOlympicsData.getCity(idB);
+  empty.hidden = true;
+  table.hidden = false;
+  summary.hidden = false;
+
+  document.getElementById("cmpNameA").innerHTML = `${escapeHtml(cityA.city)}<span>${escapeHtml(cityA.country)}</span>`;
+  document.getElementById("cmpNameB").innerHTML = `${escapeHtml(cityB.city)}<span>${escapeHtml(cityB.country)}</span>`;
+
+  let winsA = 0, winsB = 0;
+  const body = document.getElementById("compareBody");
+  body.innerHTML = "";
+
+  COMPARE_METRICS.forEach((metric) => {
+    const vA = cityA[metric.key];
+    const vB = cityB[metric.key];
+    let aWins = false, bWins = false;
+
+    if (vA !== null && vB !== null && Math.abs(vA - vB) > 0.05) {
+      if (metric.better === "lower") {
+        aWins = vA < vB;
+        bWins = vB < vA;
+      } else {
+        aWins = vA > vB;
+        bWins = vB > vA;
+      }
+    }
+    if (aWins) winsA++;
+    if (bWins) winsB++;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="cmp-metric">${metric.label}</td>
+      <td class="cmp-val ${aWins ? "cmp-win" : ""}">${formatCompareValue(vA, metric)}</td>
+      <td class="cmp-val ${bWins ? "cmp-win" : ""}">${formatCompareValue(vB, metric)}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  if (winsA === winsB) {
+    summary.innerHTML = `It's a dead heat — <strong>${escapeHtml(cityA.city)}</strong> and <strong>${escapeHtml(cityB.city)}</strong> split the metrics ${winsA}–${winsB}.`;
+  } else {
+    const winner = winsA > winsB ? cityA : cityB;
+    const loser = winsA > winsB ? cityB : cityA;
+    const score = winsA > winsB ? `${winsA}–${winsB}` : `${winsB}–${winsA}`;
+    summary.innerHTML = `🏆 <strong>${escapeHtml(winner.city)}</strong> takes the head-to-head over ${escapeHtml(loser.city)}, ${score}.`;
+  }
+}
+
+function formatCompareValue(v, metric) {
+  if (v === null || v === undefined || !Number.isFinite(v)) return "—";
+  const formatted = metric.format(v);
+  return `${formatted} <span class="unit">${metric.unit}</span>`;
 }
 
 /* ---------------------- Share ---------------------- */
@@ -362,9 +462,8 @@ async function handleShare() {
   } else if (navigator.clipboard) {
     await navigator.clipboard.writeText(shareData.url);
     const btn = document.getElementById("shareBtn");
-    const original = btn.textContent;
-    btn.textContent = "Link copied!";
-    setTimeout(() => (btn.textContent = original), 1800);
+    btn.classList.add("share-copied");
+    setTimeout(() => btn.classList.remove("share-copied"), 1800);
   }
 }
 
