@@ -169,7 +169,7 @@ function renderPodium(eventKey) {
 
   // Order for visual podium: 2nd, 1st, 3rd
   const order = [top3[1], top3[0], top3[2]].filter(Boolean);
-  const heights = { 0: 132, 1: 176, 2: 100 };
+  const heights = { 0: 176, 1: 140, 2: 104 };
   const placeLabel = (rank) => (rank === 0 ? "GOLD" : rank === 1 ? "SILVER" : "BRONZE");
 
   wrap.innerHTML = "";
